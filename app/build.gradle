@@ -23,6 +23,10 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 }
 
+application {
+	mainClass = 'hexlet.code.AppApplication'
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
 }
