@@ -10,6 +10,9 @@ build:
 start:
 	make -C app start
 
+start-prod:
+	make -C app start-prod
+
 lint:
 	make -C app lint
 
