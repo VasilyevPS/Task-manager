@@ -1,6 +1,8 @@
 server:
   port: ${PORT:5001}
 
+base-url: /api
+
 spring:
   application:
     name: taskManager
@@ -17,3 +19,7 @@ spring:
   jpa:
     hibernate:
       ddl-auto: create-drop
+
+springdoc:
+  api-docs:
+    path: /swagger.html

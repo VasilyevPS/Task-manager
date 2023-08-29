@@ -30,14 +30,14 @@ public class User {
     @GeneratedValue(strategy = IDENTITY)
     private long id;
 
+    @Column(unique = true)
+    private String email;
+
     @NotBlank
     private String firstName;
 
     @NotBlank
     private String lastName;
-
-    @Column(unique = true)
-    private String email;
 
     @NotBlank
     @JsonIgnore
