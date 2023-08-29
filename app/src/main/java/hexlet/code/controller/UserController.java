@@ -34,8 +34,8 @@ public class UserController {
 
     @Operation(summary = "Get specific user by id")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User found"),
-            @ApiResponse(responseCode = "404", description = "User not found")
+        @ApiResponse(responseCode = "200", description = "User found"),
+        @ApiResponse(responseCode = "404", description = "User not found")
     })
     @GetMapping(path = ID)
     public User getUser(@PathVariable final long id) {
@@ -51,8 +51,8 @@ public class UserController {
 
     @Operation(summary = "Create new user")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "User created"),
-            @ApiResponse(responseCode = "422", description = "User already exists or some info is missing")
+        @ApiResponse(responseCode = "201", description = "User created"),
+        @ApiResponse(responseCode = "422", description = "User already exists or some info is missing")
     })
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
@@ -62,8 +62,8 @@ public class UserController {
 
     @Operation(summary = "Update user by id")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User updated"),
-            @ApiResponse(responseCode = "404", description = "User not found")
+        @ApiResponse(responseCode = "200", description = "User updated"),
+        @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PutMapping(path = ID)
     public User updateUser(@PathVariable final long id, @RequestBody @Valid final UserDto userDto) {
@@ -72,8 +72,8 @@ public class UserController {
 
     @Operation(summary = "Delete user by id")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "User deleted"),
-            @ApiResponse(responseCode = "404", description = "User not found")
+        @ApiResponse(responseCode = "200", description = "User deleted"),
+        @ApiResponse(responseCode = "404", description = "User not found")
     })
     @DeleteMapping(path = ID)
     public void deleteUser(@PathVariable final long id) {
