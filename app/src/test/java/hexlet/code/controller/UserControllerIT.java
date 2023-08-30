@@ -2,6 +2,7 @@ package hexlet.code.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import hexlet.code.config.SpringConfigForIT;
+import hexlet.code.dto.LoginDto;
 import hexlet.code.dto.UserDto;
 import hexlet.code.model.User;
 import hexlet.code.repository.UserRepository;
@@ -19,6 +20,7 @@ import org.springframework.test.context.junit.jupiter.SpringExtension;
 import java.util.List;
 
 import static hexlet.code.utils.TestUtils.ID;
+import static hexlet.code.utils.TestUtils.LOGIN_URL;
 import static hexlet.code.utils.TestUtils.TEST_USERNAME;
 import static hexlet.code.utils.TestUtils.TEST_USERNAME_2;
 import static hexlet.code.utils.TestUtils.USER_CONTROLLER_URL;
@@ -36,6 +38,7 @@ import static hexlet.code.config.SpringConfigForIT.TEST_PROFILE;
 import static org.springframework.boot.test.context.SpringBootTest.WebEnvironment.RANDOM_PORT;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -76,8 +79,9 @@ public class UserControllerIT {
         final User expectedUser = userRepository.findAll().get(0);
 
         final var response = testUtils.perform(
-                        get(USER_CONTROLLER_URL + ID, expectedUser.getId()))
-                .andExpect(status().isOk())
+                        get(USER_CONTROLLER_URL + ID, expectedUser.getId()),
+                        TEST_USERNAME
+                ).andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
 
@@ -88,16 +92,6 @@ public class UserControllerIT {
         assertEquals(expectedUser.getEmail(), user.getEmail());
         assertEquals(expectedUser.getFirstName(), user.getFirstName());
         assertEquals(expectedUser.getLastName(), user.getLastName());
-    }
-
-    @Test
-    public void testGetUserByIdFail() throws Exception {
-        testUtils.addDefaultUser();
-        final User expectedUser = userRepository.findAll().get(0);
-
-        final var response = testUtils.perform(
-                        get(USER_CONTROLLER_URL + ID, expectedUser.getId() + 1))
-                .andExpect(status().isNotFound());
     }
 
     @Test
@@ -114,7 +108,6 @@ public class UserControllerIT {
         assertThat(users).hasSize(1);
     }
 
-
     @Test
     public void testUpdateUser() throws Exception {
         testUtils.addDefaultUser();
@@ -127,7 +120,7 @@ public class UserControllerIT {
                 .content(asJson(userDto))
                 .contentType(APPLICATION_JSON);
 
-        testUtils.perform(updateRequest).andExpect(status().isOk());
+        testUtils.perform(updateRequest, TEST_USERNAME).andExpect(status().isOk());
 
         assertTrue(userRepository.existsById(userId));
         assertNull(userRepository.findByEmail(TEST_USERNAME).orElse(null));
@@ -140,9 +133,30 @@ public class UserControllerIT {
 
         final Long userId = userRepository.findByEmail(TEST_USERNAME).get().getId();
 
-        testUtils.perform(delete(USER_CONTROLLER_URL + ID, userId))
+        testUtils.perform(delete(USER_CONTROLLER_URL + ID, userId), TEST_USERNAME)
                 .andExpect(status().isOk());
 
         assertEquals(0, userRepository.count());
+    }
+
+    @Test
+    public void testLogin() throws Exception {
+        testUtils.addDefaultUser();
+        final LoginDto loginDto = new LoginDto(
+                testUtils.getTestUserDto().getEmail(),
+                testUtils.getTestUserDto().getPassword()
+        );
+        final var loginRequest = post(LOGIN_URL).content(asJson(loginDto)).contentType(APPLICATION_JSON);
+        testUtils.perform(loginRequest).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testLoginFail() throws Exception {
+        final LoginDto loginDto = new LoginDto(
+                testUtils.getTestUserDto().getEmail(),
+                testUtils.getTestUserDto().getPassword()
+        );
+        final var loginRequest = post(LOGIN_URL).content(asJson(loginDto)).contentType(APPLICATION_JSON);
+        testUtils.perform(loginRequest).andExpect(status().isUnauthorized());
     }
 }

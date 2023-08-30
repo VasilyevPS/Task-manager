@@ -7,6 +7,7 @@ plugins {
 	id 'org.liquibase.gradle' version '2.2.0'
 	id 'org.springdoc.openapi-gradle-plugin' version '1.7.0'
 	id 'com.github.johnrengelman.processes' version '0.5.0'
+	id 'com.adarshr.test-logger' version '3.2.0'
 }
 
 group = 'hexlet.code'
@@ -27,6 +28,7 @@ repositories {
 }
 
 dependencies {
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	compileOnly 'org.projectlombok:lombok'
 
 	annotationProcessor(
@@ -39,9 +41,12 @@ dependencies {
 			'org.springframework.boot:spring-boot-starter-web',
 			'org.springframework.boot:spring-boot-starter-data-jpa',
 			'org.springframework.boot:spring-boot-starter-validation',
+			'org.springframework.boot:spring-boot-starter-actuator',
+			'org.springframework.boot:spring-boot-starter-security',
 			'org.liquibase:liquibase-core',
 			'com.querydsl:querydsl-jpa:5.0.0:jakarta',
-			'org.springdoc:springdoc-openapi-ui:1.7.0'
+			'org.springdoc:springdoc-openapi-ui:1.7.0',
+			'io.jsonwebtoken:jjwt:0.9.1'
 	)
 
 	liquibaseRuntime(
@@ -58,7 +63,11 @@ dependencies {
 			'org.postgresql:postgresql'
 	)
 
-	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testImplementation(
+			'org.springframework.boot:spring-boot-starter-security',
+			'org.springframework.security:spring-security-test',
+			'org.springframework.boot:spring-boot-starter-test'
+	)
 }
 
 application {

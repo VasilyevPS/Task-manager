@@ -1,6 +1,8 @@
 package hexlet.code;
 
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -11,12 +13,26 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static org.springframework.http.HttpStatus.FORBIDDEN;
 import static org.springframework.http.HttpStatus.NOT_FOUND;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY;
 
 @ResponseBody
 @ControllerAdvice
 public class BaseExceptionHandler {
+
+    @ResponseStatus(UNAUTHORIZED)
+    @ExceptionHandler(UsernameNotFoundException.class)
+    public String userNitFoundExceptionHandler(UsernameNotFoundException exception) {
+        return exception.getMessage();
+    }
+
+    @ResponseStatus(FORBIDDEN)
+    @ExceptionHandler(AccessDeniedException.class)
+    public String accessDeniedException(AccessDeniedException exception) {
+        return exception.getMessage();
+    }
 
     @ResponseStatus(NOT_FOUND)
     @ExceptionHandler(NoSuchElementException.class)
