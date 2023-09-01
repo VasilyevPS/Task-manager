@@ -29,6 +29,7 @@ public class TestUtils {
     public static final String BASE_URL = "/api";
     public static final String USER_CONTROLLER_URL = BASE_URL + USER_CONTROLLER_PATH;
     public static final String LOGIN_URL = BASE_URL + LOGIN;
+    public static final String TASK_STATUS_CONTROLLER_URL = BASE_URL + TASK_STATUS_CONTROLLER_PATH;
     public static final String TEST_EMAIL = "test@email.com";
     public static final String TEST_EMAIL_2 = "test2@email.com";
     private static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
@@ -51,10 +52,14 @@ public class TestUtils {
     private UserRepository userRepository;
 
     @Autowired
+    private TaskStatusRepository taskStatusRepository;
+
+    @Autowired
     private JWTHelper jwtHelper;
 
     public void clearDB() {
         userRepository.deleteAll();
+        taskStatusRepository.deleteAll();
     }
 
     public User getUserByEmail(final String email) {
@@ -71,6 +76,13 @@ public class TestUtils {
                 .contentType(APPLICATION_JSON);
 
         return perform(request);
+    }
+
+    public ResultActions addTaskStatus(final String name) throws Exception {
+        TaskStatusDto taskStatusDto = new TaskStatusDto(name);
+        return perform(post(TASK_STATUS_CONTROLLER_URL)
+                .content(asJson(taskStatusDto))
+                .contentType(APPLICATION_JSON), TEST_EMAIL);
     }
 
     public ResultActions perform(final MockHttpServletRequestBuilder request, final String byUser) throws Exception {
