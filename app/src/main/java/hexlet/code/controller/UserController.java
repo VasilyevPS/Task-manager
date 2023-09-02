@@ -1,5 +1,6 @@
 package hexlet.code.controller;
 
+import java.util.List;
 import hexlet.code.dto.UserDto;
 import hexlet.code.model.User;
 import hexlet.code.service.UserService;
@@ -9,6 +10,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,8 +21,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-
 import static hexlet.code.controller.UserController.USER_CONTROLLER_PATH;
 
 @AllArgsConstructor
@@ -29,6 +29,10 @@ import static hexlet.code.controller.UserController.USER_CONTROLLER_PATH;
 public class UserController {
     public static final String USER_CONTROLLER_PATH = "/users";
     public static final String ID = "/{id}";
+
+    private static final String ONLY_OWNER_BY_ID = """
+            @userRepository.findById(#id).get().getEmail() == authentication.getName()
+        """;
 
     private final UserService userService;
 
@@ -66,6 +70,7 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     @PutMapping(path = ID)
+    @PreAuthorize(ONLY_OWNER_BY_ID)
     public User updateUser(@PathVariable final long id, @RequestBody @Valid final UserDto userDto) {
         return userService.updateUser(id, userDto);
     }
@@ -76,6 +81,7 @@ public class UserController {
         @ApiResponse(responseCode = "404", description = "User not found")
     })
     @DeleteMapping(path = ID)
+    @PreAuthorize(ONLY_OWNER_BY_ID)
     public void deleteUser(@PathVariable final long id) {
         userService.deleteUser(id);
     }
