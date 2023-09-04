@@ -58,14 +58,14 @@ public class TaskStatusControllerIT {
     }
 
     @Test
-    public void createTaskStatus() throws Exception {
+    public void testCreateTaskStatus() throws Exception {
         assertEquals(0, taskStatusRepository.count());
         testUtils.addTaskStatus("First status").andExpect(status().isCreated());
         assertEquals(1, taskStatusRepository.count());
     }
 
     @Test
-    public void createTaskStatusTwiceFail() throws Exception {
+    public void testCreateTaskStatusTwiceFail() throws Exception {
         testUtils.addTaskStatus("First status").andExpect(status().isCreated());
         testUtils.addTaskStatus("First status").andExpect(status().isUnprocessableEntity());
         assertEquals(1, taskStatusRepository.count());
@@ -106,7 +106,7 @@ public class TaskStatusControllerIT {
     }
 
     @Test
-    public void testTaskStatus() throws Exception {
+    public void testUpdateTaskStatus() throws Exception {
         testUtils.addTaskStatus("First status");
         final TaskStatus expectedTaskStatus = taskStatusRepository.findAll().get(0);
         final var taskStatusDto = new TaskStatusDto("New status");
@@ -129,7 +129,7 @@ public class TaskStatusControllerIT {
     }
 
     @Test
-    public void testDeleteUser() throws Exception {
+    public void testDeleteTaskStatus() throws Exception {
         testUtils.addTaskStatus("First status");
         final TaskStatus expectedTaskStatus = taskStatusRepository.findAll().get(0);
 
