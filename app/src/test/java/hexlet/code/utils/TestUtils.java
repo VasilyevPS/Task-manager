@@ -4,9 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.component.JWTHelper;
+import hexlet.code.dto.TaskDto;
 import hexlet.code.dto.TaskStatusDto;
 import hexlet.code.dto.UserDto;
 import hexlet.code.model.User;
+import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 import java.util.Map;
@@ -17,6 +19,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import static hexlet.code.config.security.SecurityConfig.LOGIN;
+import static hexlet.code.controller.TaskController.TASK_CONTROLLER_PATH;
 import static hexlet.code.controller.TaskStatusController.TASK_STATUS_CONTROLLER_PATH;
 import static hexlet.code.controller.UserController.USER_CONTROLLER_PATH;
 import static org.springframework.http.HttpHeaders.AUTHORIZATION;
@@ -30,6 +33,7 @@ public class TestUtils {
     public static final String USER_CONTROLLER_URL = BASE_URL + USER_CONTROLLER_PATH;
     public static final String LOGIN_URL = BASE_URL + LOGIN;
     public static final String TASK_STATUS_CONTROLLER_URL = BASE_URL + TASK_STATUS_CONTROLLER_PATH;
+    public static final String TASK_CONTROLLER_URL = BASE_URL + TASK_CONTROLLER_PATH;
     public static final String TEST_EMAIL = "test@email.com";
     public static final String TEST_EMAIL_2 = "test2@email.com";
     private static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
@@ -55,11 +59,15 @@ public class TestUtils {
     private TaskStatusRepository taskStatusRepository;
 
     @Autowired
+    private TaskRepository taskRepository;
+
+    @Autowired
     private JWTHelper jwtHelper;
 
     public void clearDB() {
-        userRepository.deleteAll();
+        taskRepository.deleteAll();
         taskStatusRepository.deleteAll();
+        userRepository.deleteAll();
     }
 
     public User getUserByEmail(final String email) {
@@ -84,6 +92,17 @@ public class TestUtils {
                 .content(asJson(taskStatusDto))
                 .contentType(APPLICATION_JSON), TEST_EMAIL);
     }
+
+    public ResultActions addTask() throws Exception {
+        long userId = userRepository.findAll().get(0).getId();
+        addTaskStatus("New status");
+        long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        TaskDto taskDto = new TaskDto("Task 1", "Description 1", taskStatusId, userId);
+        return perform(post(TASK_CONTROLLER_URL)
+                .content(asJson(taskDto))
+                .contentType(APPLICATION_JSON), TEST_EMAIL);
+    }
+
 
     public ResultActions perform(final MockHttpServletRequestBuilder request, final String byUser) throws Exception {
         final String token = jwtHelper.expiring(Map.of("username", byUser));
