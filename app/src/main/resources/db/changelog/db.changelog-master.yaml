@@ -1,6 +1,27 @@
 databaseChangeLog:
 - changeSet:
-    id: 1693851329061-1
+    id: 1694017409353-1
+    author: pavel (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            autoIncrement: true
+            constraints:
+              nullable: false
+              primaryKey: true
+              primaryKeyName: labelsPK
+            name: id
+            type: BIGINT
+        - column:
+            name: created_at
+            type: TIMESTAMP(6)
+        - column:
+            name: name
+            type: VARCHAR(255)
+        tableName: labels
+- changeSet:
+    id: 1694017409353-2
     author: pavel (generated)
     changes:
     - createTable:
@@ -21,7 +42,7 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: task_statuses
 - changeSet:
-    id: 1693851329061-2
+    id: 1694017409353-3
     author: pavel (generated)
     changes:
     - createTable:
@@ -54,7 +75,24 @@ databaseChangeLog:
             type: BIGINT
         tableName: tasks
 - changeSet:
-    id: 1693851329061-3
+    id: 1694017409353-4
+    author: pavel (generated)
+    changes:
+    - createTable:
+        columns:
+        - column:
+            constraints:
+              nullable: false
+            name: label_id
+            type: BIGINT
+        - column:
+            constraints:
+              nullable: false
+            name: task_id
+            type: BIGINT
+        tableName: tasks_labels
+- changeSet:
+    id: 1694017409353-5
     author: pavel (generated)
     changes:
     - createTable:
@@ -84,7 +122,15 @@ databaseChangeLog:
             type: VARCHAR(255)
         tableName: users
 - changeSet:
-    id: 1693851329061-4
+    id: 1694017409353-6
+    author: pavel (generated)
+    changes:
+    - addUniqueConstraint:
+        columnNames: name
+        constraintName: UC_LABELSNAME_COL
+        tableName: labels
+- changeSet:
+    id: 1694017409353-7
     author: pavel (generated)
     changes:
     - addUniqueConstraint:
@@ -92,7 +138,7 @@ databaseChangeLog:
         constraintName: UC_TASK_STATUSESNAME_COL
         tableName: task_statuses
 - changeSet:
-    id: 1693851329061-5
+    id: 1694017409353-8
     author: pavel (generated)
     changes:
     - addUniqueConstraint:
@@ -100,7 +146,20 @@ databaseChangeLog:
         constraintName: UC_USERSEMAIL_COL
         tableName: users
 - changeSet:
-    id: 1693851329061-6
+    id: 1694017409353-9
+    author: pavel (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: label_id
+        baseTableName: tasks_labels
+        constraintName: FK2udwnwv39igf1v2uuu752bi49
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: id
+        referencedTableName: tasks
+        validate: true
+- changeSet:
+    id: 1694017409353-10
     author: pavel (generated)
     changes:
     - addForeignKeyConstraint:
@@ -113,7 +172,7 @@ databaseChangeLog:
         referencedTableName: task_statuses
         validate: true
 - changeSet:
-    id: 1693851329061-7
+    id: 1694017409353-11
     author: pavel (generated)
     changes:
     - addForeignKeyConstraint:
@@ -126,7 +185,7 @@ databaseChangeLog:
         referencedTableName: users
         validate: true
 - changeSet:
-    id: 1693851329061-8
+    id: 1694017409353-12
     author: pavel (generated)
     changes:
     - addForeignKeyConstraint:
@@ -137,5 +196,18 @@ databaseChangeLog:
         initiallyDeferred: false
         referencedColumnNames: id
         referencedTableName: users
+        validate: true
+- changeSet:
+    id: 1694017409353-13
+    author: pavel (generated)
+    changes:
+    - addForeignKeyConstraint:
+        baseColumnNames: task_id
+        baseTableName: tasks_labels
+        constraintName: FKkl69kcbqw6pusaxtr7olwcn7l
+        deferrable: false
+        initiallyDeferred: false
+        referencedColumnNames: id
+        referencedTableName: labels
         validate: true
 

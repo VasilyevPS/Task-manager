@@ -4,13 +4,17 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hexlet.code.component.JWTHelper;
+import hexlet.code.dto.LabelDto;
 import hexlet.code.dto.TaskDto;
 import hexlet.code.dto.TaskStatusDto;
 import hexlet.code.dto.UserDto;
 import hexlet.code.model.User;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
+
+import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -19,6 +23,7 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 
 import static hexlet.code.config.security.SecurityConfig.LOGIN;
+import static hexlet.code.controller.LabelController.LABEL_CONTROLLER_PATH;
 import static hexlet.code.controller.TaskController.TASK_CONTROLLER_PATH;
 import static hexlet.code.controller.TaskStatusController.TASK_STATUS_CONTROLLER_PATH;
 import static hexlet.code.controller.UserController.USER_CONTROLLER_PATH;
@@ -34,6 +39,7 @@ public class TestUtils {
     public static final String LOGIN_URL = BASE_URL + LOGIN;
     public static final String TASK_STATUS_CONTROLLER_URL = BASE_URL + TASK_STATUS_CONTROLLER_PATH;
     public static final String TASK_CONTROLLER_URL = BASE_URL + TASK_CONTROLLER_PATH;
+    public static final String LABEL_CONTROLLER_URL = BASE_URL + LABEL_CONTROLLER_PATH;
     public static final String TEST_EMAIL = "test@email.com";
     public static final String TEST_EMAIL_2 = "test2@email.com";
     private static final ObjectMapper MAPPER = new ObjectMapper().findAndRegisterModules();
@@ -62,11 +68,15 @@ public class TestUtils {
     private TaskRepository taskRepository;
 
     @Autowired
+    private LabelRepository labelRepository;
+
+    @Autowired
     private JWTHelper jwtHelper;
 
     public void clearDB() {
         taskRepository.deleteAll();
         taskStatusRepository.deleteAll();
+        labelRepository.deleteAll();
         userRepository.deleteAll();
     }
 
@@ -93,21 +103,34 @@ public class TestUtils {
                 .contentType(APPLICATION_JSON), TEST_EMAIL);
     }
 
+    public ResultActions addLabel(final String name) throws Exception {
+        LabelDto labelDto = new LabelDto(name);
+        return perform(post(LABEL_CONTROLLER_URL)
+                .content(asJson(labelDto))
+                .contentType(APPLICATION_JSON), TEST_EMAIL);
+    }
+
     public ResultActions addTask() throws Exception {
         long userId = userRepository.findAll().get(0).getId();
         addTaskStatus("New status");
         long taskStatusId = taskStatusRepository.findAll().get(0).getId();
-        TaskDto taskDto = new TaskDto("Task 1", "Description 1", taskStatusId, userId);
+        addLabel("New label");
+        long labelId = labelRepository.findAll().get(0).getId();
+        TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
         return perform(post(TASK_CONTROLLER_URL)
                 .content(asJson(taskDto))
                 .contentType(APPLICATION_JSON), TEST_EMAIL);
     }
 
-
     public ResultActions perform(final MockHttpServletRequestBuilder request, final String byUser) throws Exception {
         final String token = jwtHelper.expiring(Map.of("username", byUser));
         request.header(AUTHORIZATION, token);
-
         return perform(request);
     }
 
