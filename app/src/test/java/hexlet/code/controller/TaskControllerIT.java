@@ -3,7 +3,9 @@ package hexlet.code.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import hexlet.code.config.SpringConfigForIT;
 import hexlet.code.dto.TaskDto;
+import hexlet.code.model.Label;
 import hexlet.code.model.Task;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.utils.TestUtils;
 import java.util.List;
@@ -41,6 +43,9 @@ public class TaskControllerIT {
 
     @Autowired
     private TaskRepository taskRepository;
+
+    @Autowired
+    private LabelRepository labelRepository;
 
     @Autowired
     private TestUtils testUtils;
@@ -104,12 +109,14 @@ public class TaskControllerIT {
         testUtils.addTask();
         assertEquals(1, taskRepository.count());
         Task task = taskRepository.findAll().get(0);
+        Label label = labelRepository.findAll().get(0);
 
         TaskDto taskDto = new TaskDto(
                 "Updated task 1",
                 "Updated description 1",
                 task.getTaskStatus().getId(),
-                task.getExecutor().getId());
+                task.getExecutor().getId(),
+                List.of(label.getId()));
 
         testUtils.perform(put(TASK_CONTROLLER_URL + ID, task.getId())
                         .content(asJson(taskDto))

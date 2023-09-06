@@ -1,9 +1,11 @@
 package hexlet.code.service;
 
 import hexlet.code.dto.TaskDto;
+import hexlet.code.model.Label;
 import hexlet.code.model.Task;
 import hexlet.code.model.TaskStatus;
 import hexlet.code.model.User;
+import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
@@ -11,6 +13,7 @@ import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -22,6 +25,7 @@ public class TaskServiceImpl implements TaskService {
     private final UserRepository userRepository;
     private final UserService userService;
     private final TaskStatusRepository taskStatusRepository;
+    private final LabelRepository labelRepository;
 
     @Override
     public Task getTaskById(long id) {
@@ -39,11 +43,13 @@ public class TaskServiceImpl implements TaskService {
         User author = userService.getCurrentUser();
         User executor = userRepository.findById(taskDto.getExecutorId()).orElse(null);
         TaskStatus taskStatus = taskStatusRepository.findById(taskDto.getTaskStatusId()).orElseThrow();
+        List<Label> labels = new ArrayList<>(labelRepository.findAllById(taskDto.getLabelIds()));
         task.setName(taskDto.getName());
         task.setDescription(taskDto.getDescription());
         task.setTaskStatus(taskStatus);
         task.setAuthor(author);
         task.setExecutor(executor);
+        task.setLabels(labels);
         return taskRepository.save(task);
     }
 
@@ -53,11 +59,13 @@ public class TaskServiceImpl implements TaskService {
         User author = userService.getCurrentUser();
         User executor = userRepository.findById(taskDto.getExecutorId()).orElse(null);
         TaskStatus taskStatus = taskStatusRepository.findById(taskDto.getTaskStatusId()).orElseThrow();
+        List<Label> labels = new ArrayList<>(labelRepository.findAllById(taskDto.getLabelIds()));
         task.setName(taskDto.getName());
         task.setDescription(taskDto.getDescription());
         task.setTaskStatus(taskStatus);
         task.setAuthor(author);
         task.setExecutor(executor);
+        task.setLabels(labels);
         return taskRepository.save(task);
     }
 
