@@ -1,11 +1,14 @@
 package hexlet.code.controller;
 
+import com.querydsl.core.types.Predicate;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
+import org.springframework.data.querydsl.binding.QuerydslPredicate;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -19,7 +22,6 @@ import org.springframework.web.bind.annotation.RestController;
 import hexlet.code.dto.TaskDto;
 import hexlet.code.model.Task;
 import hexlet.code.service.TaskService;
-import java.util.List;
 
 import static hexlet.code.controller.TaskController.TASK_CONTROLLER_PATH;
 
@@ -50,8 +52,8 @@ public class TaskController {
     @Operation(summary = "Get list of all tasks")
     @ApiResponse(responseCode = "200", description = "List of all tasks")
     @GetMapping
-    public List<Task> getAllTasks() {
-        return taskService.getTasks();
+    public Iterable<Task> getAllTasks(@QuerydslPredicate(root = Task.class) Predicate predicate) {
+        return taskService.getTasks(predicate);
     }
 
     @Operation(summary = "Create new task")
@@ -71,6 +73,7 @@ public class TaskController {
         @ApiResponse(responseCode = "404", description = "Task not found")
     })
     @PutMapping(path = ID)
+    @PreAuthorize(ONLY_OWNER_BY_ID)
     public Task updateTask(@PathVariable final long id, @RequestBody @Valid final TaskDto taskDto) {
         return taskService.updateTask(id, taskDto);
     }
@@ -80,6 +83,7 @@ public class TaskController {
         @ApiResponse(responseCode = "200", description = "Task deleted"),
         @ApiResponse(responseCode = "404", description = "Task not found")
     })
+    @PreAuthorize(ONLY_OWNER_BY_ID)
     @DeleteMapping(path = ID)
     public void deleteTask(@PathVariable final long id) {
         taskService.deleteTask(id);
