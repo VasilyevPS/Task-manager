@@ -5,3 +5,5 @@
 
 ## Demo
 https://vasilyevps-task-manager.onrender.com
+
+https://vasilyevps-task-manager.onrender.com/swagger-ui/index.html
