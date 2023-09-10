@@ -1,26 +1,25 @@
 setup:
-	make -C app setup
+	gradle wrapper --gradle-version 8.2.1
 
 clean:
-	make -C app clean
+	./gradlew clean
 
 build:
-	make -C app build
+	./gradlew clean build
 
 start:
-	make -C app start
+	./gradlew bootRun --args='--spring.profiles.active=dev'
 
 start-prod:
-	make -C app start-prod
+	./gradlew bootRun --args='--spring.profiles.active=prod'
 
 lint:
-	make -C app lint
+	./gradlew checkstyleMain checkstyleTest
 
 test:
-	make -C app test
+	./gradlew test
 
 report:
-	make -C app report
-
+	./gradlew jacocoTestReport
 
 .PHONY: build
