@@ -1,4 +1,4 @@
-base-url: ""
+base-url: /api
 rollbar_token: ${ROLLBAR_TOKEN:b2a13ba384d241da822552c54ccf3b95}
 
 spring:
