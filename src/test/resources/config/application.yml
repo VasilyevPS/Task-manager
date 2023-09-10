@@ -1,7 +1,4 @@
-server:
-  port: ${PORT:5000}
-
-base-url: /api
+base-url: ""
 rollbar_token: ${ROLLBAR_TOKEN:b2a13ba384d241da822552c54ccf3b95}
 
 spring:
