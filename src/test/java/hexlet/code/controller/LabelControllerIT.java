@@ -61,13 +61,24 @@ public class LabelControllerIT {
         assertEquals(0, labelRepository.count());
         testUtils.addLabel("First label").andExpect(status().isCreated());
         assertEquals(1, labelRepository.count());
+
+        final Label label = labelRepository.findAll().get(0);
+        assertEquals("First label", label.getName());
     }
 
     @Test
     public void testCreateLabelTwiceFail() throws Exception {
+        assertEquals(0, labelRepository.count());
         testUtils.addLabel("First label").andExpect(status().isCreated());
         testUtils.addLabel("First label").andExpect(status().isUnprocessableEntity());
         assertEquals(1, labelRepository.count());
+    }
+
+    @Test
+    public void testCreateLabelInfoMissing() throws Exception {
+        assertEquals(0, labelRepository.count());
+        testUtils.addLabel("").andExpect(status().isUnprocessableEntity());
+        assertEquals(0, labelRepository.count());
     }
 
     @Test
@@ -90,7 +101,16 @@ public class LabelControllerIT {
     }
 
     @Test
-    public void testGetAllTaskStatuses() throws Exception {
+    public void testGetLabelByIdNotExist() throws Exception {
+        final int notExistedLabelId = 1;
+        testUtils.perform(
+                        get(LABEL_CONTROLLER_URL + ID, notExistedLabelId),
+                        TEST_EMAIL
+                ).andExpect(status().isNotFound());
+    }
+
+    @Test
+    public void testGetAllLabels() throws Exception {
         testUtils.addLabel("First label");
 
         final var response = testUtils.perform(get(LABEL_CONTROLLER_URL), TEST_EMAIL)
@@ -105,7 +125,7 @@ public class LabelControllerIT {
     }
 
     @Test
-    public void testUpdateTaskStatus() throws Exception {
+    public void testUpdateLabel() throws Exception {
         testUtils.addLabel("First label");
         final Label expectedLabel = labelRepository.findAll().get(0);
         final var labelDto = new LabelDto("New label");
@@ -114,7 +134,7 @@ public class LabelControllerIT {
                 .content(asJson(labelDto))
                 .contentType(APPLICATION_JSON);
 
-        var response = testUtils.perform(updateRequest, TEST_EMAIL)
+        final var response = testUtils.perform(updateRequest, TEST_EMAIL)
                 .andExpect(status().isOk())
                 .andReturn()
                 .getResponse();
@@ -128,7 +148,43 @@ public class LabelControllerIT {
     }
 
     @Test
-    public void testDeleteTaskStatus() throws Exception {
+    public void testUpdateLabelNotExist() throws Exception {
+        testUtils.addLabel("First label");
+        final int notExistedLabelId = 2;
+        final var labelDto = new LabelDto("New label");
+
+        final var updateRequest = put(TestUtils.LABEL_CONTROLLER_URL + ID, notExistedLabelId)
+                .content(asJson(labelDto))
+                .contentType(APPLICATION_JSON);
+
+        testUtils.perform(updateRequest, TEST_EMAIL)
+                .andExpect(status().isNotFound());
+
+        final Label label = labelRepository.findAll().get(0);
+        assertThat(label.getName()).isEqualTo("First label");
+        assertThat(label.getName()).isNotEqualTo("New label");
+    }
+
+    @Test
+    public void testUpdateLabelInfoMissing() throws Exception {
+        testUtils.addLabel("First label");
+        Label label = labelRepository.findAll().get(0);
+        final var labelDto = new LabelDto("");
+
+        final var updateRequest = put(TestUtils.LABEL_CONTROLLER_URL + ID, label.getId())
+                .content(asJson(labelDto))
+                .contentType(APPLICATION_JSON);
+
+        testUtils.perform(updateRequest, TEST_EMAIL)
+                .andExpect(status().isUnprocessableEntity());
+
+        label = labelRepository.findAll().get(0);
+        assertThat(label.getName()).isEqualTo("First label");
+        assertThat(label.getName()).isNotEqualTo("");
+    }
+
+    @Test
+    public void testDeleteLabel() throws Exception {
         testUtils.addLabel("First label");
         final Label expectedLabel = labelRepository.findAll().get(0);
 
@@ -137,5 +193,17 @@ public class LabelControllerIT {
                 .andExpect(status().isOk());
 
         assertEquals(0, labelRepository.count());
+    }
+
+    @Test
+    public void testDeleteLabelNotExist() throws Exception {
+        testUtils.addLabel("First label");
+        final int notExistedLabelId = 2;
+
+        testUtils.perform(delete(LABEL_CONTROLLER_URL + ID, notExistedLabelId),
+                        TEST_EMAIL)
+                .andExpect(status().isNotFound());
+
+        assertEquals(1, labelRepository.count());
     }
 }

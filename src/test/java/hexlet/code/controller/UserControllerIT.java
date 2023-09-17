@@ -62,10 +62,12 @@ public class UserControllerIT {
         assertEquals(0, userRepository.count());
         testUtils.addDefaultUser().andExpect(status().isCreated());
         assertEquals(1, userRepository.count());
+        assertNotNull(userRepository.findByEmail(TEST_EMAIL).orElse(null));
     }
 
     @Test
     public void testCreateUserTwiceFail() throws Exception {
+        assertEquals(0, userRepository.count());
         testUtils.addDefaultUser().andExpect(status().isCreated());
         testUtils.addDefaultUser().andExpect(status().isUnprocessableEntity());
         assertEquals(1, userRepository.count());
@@ -90,6 +92,16 @@ public class UserControllerIT {
         assertEquals(expectedUser.getEmail(), user.getEmail());
         assertEquals(expectedUser.getFirstName(), user.getFirstName());
         assertEquals(expectedUser.getLastName(), user.getLastName());
+    }
+
+    @Test
+    public void testGetUserByIdNotExist() throws Exception {
+        final int notExistedUserId = 1;
+
+        testUtils.perform(
+                        get(USER_CONTROLLER_URL + ID, notExistedUserId),
+                        TEST_EMAIL
+                ).andExpect(status().isNotFound());
     }
 
     @Test
@@ -126,6 +138,42 @@ public class UserControllerIT {
     }
 
     @Test
+    public void testUpdateUserNotExist() throws Exception {
+        testUtils.addDefaultUser();
+        final int notExistedUserId = 2;
+
+        final var userDto = new UserDto(TEST_EMAIL_2, "new name", "new last name", "new pwd");
+
+        final var updateRequest = put(USER_CONTROLLER_URL + ID, notExistedUserId)
+                .content(asJson(userDto))
+                .contentType(APPLICATION_JSON);
+
+        testUtils.perform(updateRequest, TEST_EMAIL).andExpect(status().isNotFound());
+
+        assertNull(userRepository.findByEmail(TEST_EMAIL_2).orElse(null));
+        assertNotNull(userRepository.findByEmail(TEST_EMAIL).orElse(null));
+    }
+
+    @Test
+    public void testUpdateUserInfoMissing() throws Exception {
+        testUtils.addDefaultUser();
+
+        final Long userId = userRepository.findByEmail(TEST_EMAIL).get().getId();
+
+        final var userDto = new UserDto(TEST_EMAIL_2, "new name", "", "new pwd");
+
+        final var updateRequest = put(USER_CONTROLLER_URL + ID, userId)
+                .content(asJson(userDto))
+                .contentType(APPLICATION_JSON);
+
+        testUtils.perform(updateRequest, TEST_EMAIL).andExpect(status().isUnprocessableEntity());
+
+        assertTrue(userRepository.existsById(userId));
+        assertNull(userRepository.findByEmail(TEST_EMAIL_2).orElse(null));
+        assertNotNull(userRepository.findByEmail(TEST_EMAIL).orElse(null));
+    }
+
+    @Test
     public void testDeleteUser() throws Exception {
         testUtils.addDefaultUser();
 
@@ -135,6 +183,19 @@ public class UserControllerIT {
                 .andExpect(status().isOk());
 
         assertEquals(0, userRepository.count());
+    }
+
+    @Test
+    public void testDeleteUserNotExist() throws Exception {
+        testUtils.addDefaultUser();
+        final int notExistedUserId = 2;
+
+        testUtils.perform(
+                delete(USER_CONTROLLER_URL + ID, notExistedUserId), TEST_EMAIL
+                )
+                .andExpect(status().isNotFound());
+
+        assertEquals(1, userRepository.count());
     }
 
     @Test

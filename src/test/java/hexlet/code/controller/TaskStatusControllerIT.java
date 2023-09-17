@@ -62,13 +62,24 @@ public class TaskStatusControllerIT {
         assertEquals(0, taskStatusRepository.count());
         testUtils.addTaskStatus("First status").andExpect(status().isCreated());
         assertEquals(1, taskStatusRepository.count());
+
+        final TaskStatus taskStatus = taskStatusRepository.findAll().get(0);
+        assertEquals("First status", taskStatus.getName());
     }
 
     @Test
     public void testCreateTaskStatusTwiceFail() throws Exception {
+        assertEquals(0, taskStatusRepository.count());
         testUtils.addTaskStatus("First status").andExpect(status().isCreated());
         testUtils.addTaskStatus("First status").andExpect(status().isUnprocessableEntity());
         assertEquals(1, taskStatusRepository.count());
+    }
+
+    @Test
+    public void testCreateTaskStatusInfoMissing() throws Exception {
+        assertEquals(0, taskStatusRepository.count());
+        testUtils.addTaskStatus("").andExpect(status().isUnprocessableEntity());
+        assertEquals(0, taskStatusRepository.count());
     }
 
     @Test
@@ -88,6 +99,16 @@ public class TaskStatusControllerIT {
 
         assertEquals(expectedTaskStatus.getId(), taskStatus.getId());
         assertEquals(expectedTaskStatus.getName(), taskStatus.getName());
+    }
+
+    @Test
+    public void testGetTaskStatusByIdNotExist() throws Exception {
+        final int notExistedTaskStatusId = 1;
+
+        testUtils.perform(
+                        get(TASK_STATUS_CONTROLLER_URL + ID, notExistedTaskStatusId),
+                        TEST_EMAIL
+                ).andExpect(status().isNotFound());
     }
 
     @Test
@@ -129,6 +150,42 @@ public class TaskStatusControllerIT {
     }
 
     @Test
+    public void testUpdateTaskStatusNotExist() throws Exception {
+        testUtils.addTaskStatus("First status");
+        final TaskStatus taskStatus = taskStatusRepository.findAll().get(0);
+        final int notExistedTaskStatusId = 2;
+        final var taskStatusDto = new TaskStatusDto("New status");
+
+        final var updateRequest = put(TASK_STATUS_CONTROLLER_URL + ID, notExistedTaskStatusId)
+                .content(asJson(taskStatusDto))
+                .contentType(APPLICATION_JSON);
+
+        testUtils.perform(updateRequest, TEST_EMAIL)
+                .andExpect(status().isNotFound());
+
+        assertThat(taskStatus.getName()).isEqualTo("First status");
+        assertThat(taskStatus.getName()).isNotEqualTo("New status");
+    }
+
+    @Test
+    public void testUpdateTaskStatusInfoMissing() throws Exception {
+        testUtils.addTaskStatus("First status");
+        final TaskStatus taskStatus = taskStatusRepository.findAll().get(0);
+        final var taskStatusDto = new TaskStatusDto("");
+
+        final var updateRequest = put(TASK_STATUS_CONTROLLER_URL + ID, taskStatus.getId())
+                .content(asJson(taskStatusDto))
+                .contentType(APPLICATION_JSON);
+
+        testUtils.perform(updateRequest, TEST_EMAIL)
+                .andExpect(status().isUnprocessableEntity());
+
+        assertTrue(taskStatusRepository.existsById(taskStatus.getId()));
+        assertThat(taskStatus.getName()).isEqualTo("First status");
+        assertThat(taskStatus.getName()).isNotEqualTo("New status");
+    }
+
+    @Test
     public void testDeleteTaskStatus() throws Exception {
         testUtils.addTaskStatus("First status");
         final TaskStatus expectedTaskStatus = taskStatusRepository.findAll().get(0);
@@ -138,5 +195,17 @@ public class TaskStatusControllerIT {
                 .andExpect(status().isOk());
 
         assertEquals(0, taskStatusRepository.count());
+    }
+
+    @Test
+    public void testDeleteTaskStatusNotExist() throws Exception {
+        testUtils.addTaskStatus("First status");
+        final int notExistedTaskStatusId = 2;
+
+        testUtils.perform(delete(TASK_STATUS_CONTROLLER_URL + ID, notExistedTaskStatusId),
+                        TEST_EMAIL)
+                .andExpect(status().isNotFound());
+
+        assertEquals(1, taskStatusRepository.count());
     }
 }
