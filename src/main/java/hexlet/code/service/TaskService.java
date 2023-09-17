@@ -38,36 +38,31 @@ public class TaskService {
 
     public Task createTask(TaskDto taskDto) {
         Task task = new Task();
-        User author = userService.getCurrentUser();
-        User executor = userRepository.findById(taskDto.getExecutorId()).orElse(null);
-        TaskStatus taskStatus = taskStatusRepository.findById(taskDto.getTaskStatusId()).orElseThrow();
-        List<Label> labels = new ArrayList<>(labelRepository.findAllById(taskDto.getLabelIds()));
-        task.setName(taskDto.getName());
-        task.setDescription(taskDto.getDescription());
-        task.setTaskStatus(taskStatus);
-        task.setAuthor(author);
-        task.setExecutor(executor);
-        task.setLabels(labels);
+        transferDataFromDtoToEntity(taskDto, task);
         return taskRepository.save(task);
     }
 
     public Task updateTask(long id, TaskDto taskDto) {
         Task task = taskRepository.findById(id).orElseThrow();
-        User author = userService.getCurrentUser();
-        User executor = userRepository.findById(taskDto.getExecutorId()).orElse(null);
-        TaskStatus taskStatus = taskStatusRepository.findById(taskDto.getTaskStatusId()).orElseThrow();
-        List<Label> labels = new ArrayList<>(labelRepository.findAllById(taskDto.getLabelIds()));
-        task.setName(taskDto.getName());
-        task.setDescription(taskDto.getDescription());
-        task.setTaskStatus(taskStatus);
-        task.setAuthor(author);
-        task.setExecutor(executor);
-        task.setLabels(labels);
+        transferDataFromDtoToEntity(taskDto, task);
         return taskRepository.save(task);
     }
 
     public void deleteTask(long id) {
         Task task = taskRepository.findById(id).orElseThrow();
         taskRepository.delete(task);
+    }
+
+    private void transferDataFromDtoToEntity(TaskDto taskDto, Task task) {
+        User author = userService.getCurrentUser();
+        User executor = userRepository.findById(taskDto.getExecutorId()).orElse(null);
+        TaskStatus taskStatus = taskStatusRepository.findById(taskDto.getTaskStatusId()).orElseThrow();
+        List<Label> labels = new ArrayList<>(labelRepository.findAllById(taskDto.getLabelIds()));
+        task.setName(taskDto.getName());
+        task.setDescription(taskDto.getDescription());
+        task.setTaskStatus(taskStatus);
+        task.setAuthor(author);
+        task.setExecutor(executor);
+        task.setLabels(labels);
     }
 }
