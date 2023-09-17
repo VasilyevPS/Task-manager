@@ -160,6 +160,45 @@ public class TaskControllerIT {
     }
 
     @Test
+    public void testGetAllTasksWithFilter() throws Exception {
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto1 = new TaskDto(
+                "Task 1 with label",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto1);
+        final TaskDto taskDto2 = new TaskDto(
+                "Task 2 without label",
+                "Description 2",
+                taskStatusId,
+                userId,
+                List.of()
+        );
+        testUtils.addTask(taskDto2);
+
+        final var response = testUtils.perform(
+                get(TASK_CONTROLLER_URL)
+                        .queryParam("labelsId", ((Long) labelId).toString()), TEST_EMAIL
+                )
+                .andExpect(status().isOk())
+                .andReturn()
+                .getResponse();
+
+        final String body = response.getContentAsString();
+        final List<Task> tasks = fromJson(body, new TypeReference<>() {
+        });
+
+        assertThat(tasks).hasSize(1);
+        assertThat(body).contains("Task 1 with label");
+        assertThat(body).doesNotContain("Task 2 without label");
+    }
+
+    @Test
     public void testUpdateTask() throws Exception {
         final long userId = userRepository.findAll().get(0).getId();
         final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
