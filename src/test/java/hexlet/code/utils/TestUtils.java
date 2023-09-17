@@ -14,7 +14,6 @@ import hexlet.code.repository.TaskRepository;
 import hexlet.code.repository.TaskStatusRepository;
 import hexlet.code.repository.UserRepository;
 
-import java.util.List;
 import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -110,19 +109,7 @@ public class TestUtils {
                 .contentType(APPLICATION_JSON), TEST_EMAIL);
     }
 
-    public ResultActions addTask() throws Exception {
-        long userId = userRepository.findAll().get(0).getId();
-        addTaskStatus("New status");
-        long taskStatusId = taskStatusRepository.findAll().get(0).getId();
-        addLabel("New label");
-        long labelId = labelRepository.findAll().get(0).getId();
-        TaskDto taskDto = new TaskDto(
-                "Task 1",
-                "Description 1",
-                taskStatusId,
-                userId,
-                List.of(labelId)
-        );
+    public ResultActions addTask(TaskDto taskDto) throws Exception {
         return perform(post(TASK_CONTROLLER_URL)
                 .content(asJson(taskDto))
                 .contentType(APPLICATION_JSON), TEST_EMAIL);

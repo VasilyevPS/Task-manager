@@ -3,10 +3,11 @@ package hexlet.code.controller;
 import com.fasterxml.jackson.core.type.TypeReference;
 import hexlet.code.config.SpringConfigForIT;
 import hexlet.code.dto.TaskDto;
-import hexlet.code.model.Label;
 import hexlet.code.model.Task;
 import hexlet.code.repository.LabelRepository;
 import hexlet.code.repository.TaskRepository;
+import hexlet.code.repository.TaskStatusRepository;
+import hexlet.code.repository.UserRepository;
 import hexlet.code.utils.TestUtils;
 import java.util.List;
 import org.junit.jupiter.api.AfterEach;
@@ -48,11 +49,19 @@ public class TaskControllerIT {
     private LabelRepository labelRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
+    private TaskStatusRepository taskStatusRepository;
+
+    @Autowired
     private TestUtils testUtils;
 
     @BeforeEach
     public void before() throws Exception {
         testUtils.addDefaultUser();
+        testUtils.addTaskStatus("First status");
+        testUtils.addLabel("First label");
     }
 
     @AfterEach
@@ -63,14 +72,40 @@ public class TaskControllerIT {
     @Test
     public void testCreateTask() throws Exception {
         assertEquals(0, taskRepository.count());
-        testUtils.addTask().andExpect(status().isCreated());
+
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto).andExpect(status().isCreated());
+
         assertEquals(1, taskRepository.count());
+
+        final Task task = taskRepository.findAll().get(0);
+        assertEquals("Task 1", task.getName());
+        assertEquals("Description 1", task.getDescription());
     }
 
     @Test
     public void testGetTaskById() throws Exception {
-        testUtils.addTask().andExpect(status().isCreated());
-        assertEquals(1, taskRepository.count());
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto);
+
         final Task expectedTask = taskRepository.findAll().get(0);
 
         final var response = testUtils.perform(
@@ -90,8 +125,28 @@ public class TaskControllerIT {
     }
 
     @Test
+    public void testGetTaskByIdNotExist() throws Exception {
+        final int notExistedTaskId = 1;
+
+        testUtils.perform(
+                        get(TASK_CONTROLLER_URL + ID, notExistedTaskId),
+                        TEST_EMAIL
+                ).andExpect(status().isNotFound());
+    }
+
+    @Test
     public void testGetAllTasks() throws Exception {
-        testUtils.addTask();
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto);
 
         final var response = testUtils.perform(get(TASK_CONTROLLER_URL), TEST_EMAIL)
                 .andExpect(status().isOk())
@@ -106,20 +161,30 @@ public class TaskControllerIT {
 
     @Test
     public void testUpdateTask() throws Exception {
-        testUtils.addTask();
-        assertEquals(1, taskRepository.count());
-        Task task = taskRepository.findAll().get(0);
-        Label label = labelRepository.findAll().get(0);
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto);
 
-        TaskDto taskDto = new TaskDto(
+        Task task = taskRepository.findAll().get(0);
+
+        TaskDto newTaskDto = new TaskDto(
                 "Updated task 1",
                 "Updated description 1",
-                task.getTaskStatus().getId(),
-                task.getExecutor().getId(),
-                List.of(label.getId()));
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
 
         testUtils.perform(put(TASK_CONTROLLER_URL + ID, task.getId())
-                        .content(asJson(taskDto))
+                        .content(asJson(newTaskDto))
                         .contentType(APPLICATION_JSON), TEST_EMAIL)
                 .andExpect(status().isOk());
 
@@ -130,10 +195,94 @@ public class TaskControllerIT {
     }
 
     @Test
+    public void testUpdateTaskNotExist() throws Exception {
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto);
+
+        final int notExistedTaskId = 2;
+
+        TaskDto newTaskDto = new TaskDto(
+                "Updated task 1",
+                "Updated description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+
+        testUtils.perform(put(TASK_CONTROLLER_URL + ID, notExistedTaskId)
+                        .content(asJson(newTaskDto))
+                        .contentType(APPLICATION_JSON), TEST_EMAIL)
+                .andExpect(status().isNotFound());
+
+        final Task task = taskRepository.findAll().get(0);
+        assertTrue(taskRepository.existsById(task.getId()));
+        assertThat(task.getName()).isNotEqualTo("Updated task 1");
+        assertThat(task.getDescription()).isNotEqualTo("Updated description 1");
+        assertThat(task.getName()).isEqualTo("Task 1");
+        assertThat(task.getDescription()).isEqualTo("Description 1");
+    }
+
+    @Test
+    public void testUpdateTaskInfoMissing() throws Exception {
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto);
+
+        Task task = taskRepository.findAll().get(0);
+
+        TaskDto newTaskDto = new TaskDto(
+                "",
+                "Updated description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+
+        testUtils.perform(put(TASK_CONTROLLER_URL + ID, task.getId())
+                        .content(asJson(newTaskDto))
+                        .contentType(APPLICATION_JSON), TEST_EMAIL)
+                .andExpect(status().isUnprocessableEntity());
+
+        task = taskRepository.findAll().get(0);
+        assertTrue(taskRepository.existsById(task.getId()));
+        assertThat(task.getName()).isNotEqualTo("Updated task 1");
+        assertThat(task.getDescription()).isNotEqualTo("Updated description 1");
+        assertThat(task.getName()).isEqualTo("Task 1");
+        assertThat(task.getDescription()).isEqualTo("Description 1");
+    }
+
+    @Test
     public void testDeleteTask() throws Exception {
-        testUtils.addTask();
-        assertEquals(1, taskRepository.count());
-        long taskId = taskRepository.findAll().get(0).getId();
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto);
+
+        final long taskId = taskRepository.findAll().get(0).getId();
 
         testUtils.perform(delete(TASK_CONTROLLER_URL + ID, taskId),
                         TEST_EMAIL)
@@ -142,4 +291,26 @@ public class TaskControllerIT {
         assertEquals(0, taskRepository.count());
     }
 
+    @Test
+    public void testDeleteTaskNotExist() throws Exception {
+        final long userId = userRepository.findAll().get(0).getId();
+        final long taskStatusId = taskStatusRepository.findAll().get(0).getId();
+        final long labelId = labelRepository.findAll().get(0).getId();
+        final TaskDto taskDto = new TaskDto(
+                "Task 1",
+                "Description 1",
+                taskStatusId,
+                userId,
+                List.of(labelId)
+        );
+        testUtils.addTask(taskDto);
+
+        final int notExistedTaskId = 2;
+
+        testUtils.perform(delete(TASK_CONTROLLER_URL + ID, notExistedTaskId),
+                        TEST_EMAIL)
+                .andExpect(status().isNotFound());
+
+        assertEquals(1, taskRepository.count());
+    }
 }
